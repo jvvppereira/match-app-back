@@ -42,6 +42,7 @@ export default class CandidateController {
     return response.json({
       data: apiData,
       total,
+      offset,
       limit,
       page: Number(page),
       pages,

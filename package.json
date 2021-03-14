@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "jest",
+    "pretest": "rm -f src/tests/coverage/coverage-final.json",
     "serve": "nodemon src/server.js --exec babel-node --ignore tests",
     "build": "babel src --out-dir dist",
     "prod": "npm run build && node dist/server.js"
