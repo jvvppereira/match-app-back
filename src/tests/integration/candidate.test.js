@@ -2,11 +2,17 @@ import "regenerator-runtime";
 import request from "supertest";
 import app from "../../app";
 
-const doRequest = async (queryParams = {}, endpoint = "/candidate") => {
+const doRequest = async (
+  queryParams = {},
+  body = {},
+  endpoint = "/candidate"
+) => {
   const { page = 1, useFallback = 0, usePagination = 1 } = queryParams;
-  return await request(app).get(
-    `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}`
-  );
+  return await request(app)
+    .get(
+      `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}`
+    )
+    .send(body);
 };
 
 describe("Load candidates", () => {
@@ -24,29 +30,107 @@ describe("Load candidates", () => {
     });
   });
 
-  it("should return all candidates", async () => {
-    const response = await doRequest({ usePagination: 0 });
+  describe("Get candidates from API", () => {
+    it("should return all candidates", async () => {
+      const response = await doRequest({ usePagination: 0 });
 
-    expect(response.body.total).toBe(100);
+      expect(response.body.total).toBe(100);
+    });
+
+    it("should return all candidates paged at page 1", async () => {
+      const response = await doRequest({ page: 1 });
+
+      expect(response.body.offset).toBe(0);
+      expect(response.body.limit).toBe(12);
+    });
+
+    it("should return all candidates paged at page 2", async () => {
+      const response = await doRequest({ page: 2 });
+
+      expect(response.body.offset).toBe(12);
+      expect(response.body.limit).toBe(12);
+    });
   });
 
-  it("should return all candidates paged at page 1", async () => {
-    const response = await doRequest({ page: 1 });
+  describe("Get candidates filtered from API", () => {
+    it("should return candidates filtered by locale", async () => {
+      const filters = {
+        locales: ["Florianópolis - SC"],
+      };
 
-    expect(response.body.offset).toBe(0);
-    expect(response.body.limit).toBe(12);
-  });
+      const response = await doRequest({ usePagination: 0 }, filters);
 
-  it("should return all candidates paged at page 2", async () => {
-    const response = await doRequest({ page: 2 });
+      expect(response.body.total).toBe(4);
+    });
 
-    expect(response.body.offset).toBe(12);
-    expect(response.body.limit).toBe(12);
-  });
+    it("should return candidates filtered by 2 locales", async () => {
+      const filters = {
+        locales: ["Florianópolis - SC", "Indaial - SC"],
+      };
 
-  it("should return candidates filtered by locale", async () => {
-    const response = await doRequest();
+      const response = await doRequest({ usePagination: 0 }, filters);
 
-    expect("").toBe("");//TODO
+      expect(response.body.total).toBe(5);
+    });
+
+    it("should return candidates filtered by technology", async () => {
+      const filters = {
+        technologies: ["Ruby"],
+      };
+
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(2);
+    });
+
+    it("should return candidates filtered by 2 technologies", async () => {
+      const filters = {
+        technologies: ["Ruby", "Ruby on Rails"],
+      };
+
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(4);
+    });
+
+    it("should return candidates filtered by experience", async () => {
+      const filters = {
+        experiences: ["1-2 years"],
+      };
+
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(13);
+    });
+
+    it("should return candidates filtered by 2 experiences", async () => {
+      const filters = {
+        experiences: ["1-2 years", "3-4 years"],
+      };
+
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(28);
+    });
+
+    it("should return candidates filtered by locale, technology and experience", async () => {
+      const filters = {
+        locales: ["Florianópolis - SC"],
+        technologies: ["Ruby", "Ruby on Rails"],
+        experiences: [
+          "1-2 years",
+          "3-4 years",
+          "5-6 years",
+          "7-8 years",
+          "8-9 years",
+          "10-11 years",
+          "12+ years",
+        ],
+      };
+
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(1);
+    });
   });
 });
