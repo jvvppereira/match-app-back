@@ -1,3 +1,4 @@
+import "regenerator-runtime";
 import axios from "axios";
 import fallbackData from "../../assets/fallback-data.json";
 
