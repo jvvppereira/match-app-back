@@ -16,5 +16,8 @@ The methods to run this app are:
 
 ## How to see it?
 
-This project is beeing hosted at Heroku environment at this link: [click here!](https://match-app-back.herokuapp.com/candidate)
+This project is being hosted at Heroku environment at this link: [click here!](https://match-app-back.herokuapp.com/candidate)
 
+## Code climate evalute
+
+Follow the evaluation of Code climate about this repo: [click here!](https://codeclimate.com/github/jvvppereira/match-app-back)
