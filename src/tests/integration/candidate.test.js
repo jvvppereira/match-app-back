@@ -7,10 +7,15 @@ const doRequest = async (
   body = {},
   endpoint = "/candidate"
 ) => {
-  const { page = 1, useFallback = 0, usePagination = 1 } = queryParams;
+  const {
+    page = 1,
+    useFallback = 0,
+    usePagination = 1,
+    rowsPerPage = 10,
+  } = queryParams;
   return await request(app)
     .get(
-      `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}`
+      `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`
     )
     .send(body);
 };
@@ -41,14 +46,28 @@ describe("Load candidates", () => {
       const response = await doRequest({ page: 1 });
 
       expect(response.body.offset).toBe(0);
-      expect(response.body.limit).toBe(12);
+      expect(response.body.limit).toBe(10);
     });
 
     it("should return all candidates paged at page 2", async () => {
       const response = await doRequest({ page: 2 });
 
-      expect(response.body.offset).toBe(12);
+      expect(response.body.offset).toBe(10);
+      expect(response.body.limit).toBe(10);
+    });
+
+    it("should return all candidates paged at page 1 with 12 rows", async () => {
+      const response = await doRequest({ page: 1, rowsPerPage: 12 });
+
+      expect(response.body.offset).toBe(0);
       expect(response.body.limit).toBe(12);
+    });
+
+    it("should return all candidates paged at page 3 with 20 rows", async () => {
+      const response = await doRequest({ page: 3, rowsPerPage: 20 });
+
+      expect(response.body.offset).toBe(40);
+      expect(response.body.limit).toBe(20);
     });
   });
 

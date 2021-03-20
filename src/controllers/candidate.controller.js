@@ -24,7 +24,7 @@ export default class CandidateController {
   }
 
   async getAll(request, response) {
-    const { page = 1, useFallback = 0, usePagination = 1 } = request.query;
+    const { page = 1, useFallback = 0, usePagination = 1, rowsPerPage = 10 } = request.query;
     const { locales = [], technologies = [], experiences = [] } = request.body;
 
     const filters = { locales, technologies, experiences };
@@ -38,7 +38,7 @@ export default class CandidateController {
     apiData = this.applyFilters(apiData, filters);
 
     const total = apiData.length;
-    const limit = usingPagination() ? 12 : total;
+    const limit = usingPagination() ? rowsPerPage : total;
     const offset = usingPagination() ? (page - 1) * limit : 0;
     const pages = usingPagination() ? Math.ceil(total / limit) : 1;
 
@@ -48,7 +48,7 @@ export default class CandidateController {
       data: apiData,
       total,
       offset,
-      limit,
+      limit: Number(limit),
       page: Number(page),
       pages,
     });
