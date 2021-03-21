@@ -23,28 +23,23 @@ export default class CandidateController {
     return data;
   }
 
+  loadArrays(data, fieldName) {
+    return data.reduce((acumulator, currentCandidate) => {
+      const currentObject = currentCandidate[fieldName];
+      if (!acumulator.includes(currentObject)) {
+        acumulator.push(currentObject);
+      }
+      return acumulator;
+    }, []);
+  }
+
   loadCities(data) {
-    return data
-      .reduce((acumulator, currentCandidate) => {
-        const currentCity = currentCandidate.city;
-        if (!acumulator.includes(currentCity)) {
-          acumulator.push(currentCity);
-        }
-        return acumulator;
-      }, [])
-      .sort();
+    return this.loadArrays(data, "city").sort();
   }
 
   loadExperiences(data) {
-    return data
-      .reduce((acumulator, currentCandidate) => {
-        const currentExperience = currentCandidate.experience;
-        if (!acumulator.includes(currentExperience)) {
-          acumulator.push(currentExperience);
-        }
-        return acumulator;
-      }, [])
-      .sort((experienceLeft, experienceRight) => {
+    return this.loadArrays(data, "experience").sort(
+      (experienceLeft, experienceRight) => {
         const getExperienceNumber = (expString) => {
           let extractedNumber = Number(expString.slice(0, 2));
           if (Number.isNaN(extractedNumber)) {
@@ -57,7 +52,8 @@ export default class CandidateController {
         const numberExpRight = getExperienceNumber(experienceRight);
 
         return numberExpLeft - numberExpRight;
-      });
+      }
+    );
   }
 
   loadTechnologies(data) {
@@ -68,7 +64,6 @@ export default class CandidateController {
             acumulator.push(currentTechnology.name);
           }
         });
-
         return acumulator;
       }, [])
       .sort();
@@ -91,12 +86,7 @@ export default class CandidateController {
   }
 
   async getAll(request, response) {
-    const {
-      page = 1,
-      useFallback = 0,
-      usePagination = 1,
-      rowsPerPage = 10,
-    } = request.query;
+    const { page = 1, useFallback = 0, usePagination = 1, rowsPerPage = 10 } = request.query;
     const { cities = [], technologies = [], experiences = [] } = request.body;
 
     const filters = { cities, technologies, experiences };
