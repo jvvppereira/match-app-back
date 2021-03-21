@@ -23,11 +23,83 @@ export default class CandidateController {
     return data;
   }
 
-  async getAll(request, response) {
-    const { page = 1, useFallback = 0, usePagination = 1, rowsPerPage = 10 } = request.query;
-    const { locales = [], technologies = [], experiences = [] } = request.body;
+  loadCities(data) {
+    return data
+      .reduce((acumulator, currentCandidate) => {
+        const currentCity = currentCandidate.city;
+        if (!acumulator.includes(currentCity)) {
+          acumulator.push(currentCity);
+        }
+        return acumulator;
+      }, [])
+      .sort();
+  }
 
-    const filters = { locales, technologies, experiences };
+  loadExperiences(data) {
+    return data
+      .reduce((acumulator, currentCandidate) => {
+        const currentExperience = currentCandidate.experience;
+        if (!acumulator.includes(currentExperience)) {
+          acumulator.push(currentExperience);
+        }
+        return acumulator;
+      }, [])
+      .sort((experienceLeft, experienceRight) => {
+        const getExperienceNumber = (expString) => {
+          let extractedNumber = Number(expString.slice(0, 2));
+          if (Number.isNaN(extractedNumber)) {
+            extractedNumber = Number(expString.slice(0, 1));
+          }
+          return extractedNumber;
+        };
+
+        const numberExpLeft = getExperienceNumber(experienceLeft);
+        const numberExpRight = getExperienceNumber(experienceRight);
+
+        return numberExpLeft - numberExpRight;
+      });
+  }
+
+  loadTechnologies(data) {
+    return data
+      .reduce((acumulator, currentCandidate) => {
+        currentCandidate.technologies.forEach((currentTechnology) => {
+          if (!acumulator.includes(currentTechnology.name)) {
+            acumulator.push(currentTechnology.name);
+          }
+        });
+
+        return acumulator;
+      }, [])
+      .sort();
+  }
+
+  async getAvailableFilters(request, response) {
+    const { useFallback = 0 } = request.query;
+
+    const {
+      data: { candidates: apiData },
+    } = await this.getDataFromAPI(useFallback);
+
+    return response.json({
+      filters: {
+        cities: this.loadCities(apiData),
+        experiences: this.loadExperiences(apiData),
+        technologies: this.loadTechnologies(apiData),
+      },
+    });
+  }
+
+  async getAll(request, response) {
+    const {
+      page = 1,
+      useFallback = 0,
+      usePagination = 1,
+      rowsPerPage = 10,
+    } = request.query;
+    const { cities = [], technologies = [], experiences = [] } = request.body;
+
+    const filters = { cities, technologies, experiences };
 
     const usingPagination = () => usePagination == 1;
 
@@ -55,8 +127,8 @@ export default class CandidateController {
   }
 
   applyFilters(rows, filters) {
-    const localeFilter = (candidate) =>
-      filters.locales.length == 0 || filters.locales.includes(candidate.city);
+    const cityFilter = (candidate) =>
+      filters.cities.length == 0 || filters.cities.includes(candidate.city);
 
     const technologyFilter = (candidate) =>
       filters.technologies.length == 0 ||
@@ -65,8 +137,12 @@ export default class CandidateController {
       ).length > 0;
 
     const experienceFilter = (candidate) =>
-      filters.experiences.length == 0 || filters.experiences.includes(candidate.experience);
+      filters.experiences.length == 0 ||
+      filters.experiences.includes(candidate.experience);
 
-    return rows.filter(localeFilter).filter(technologyFilter).filter(experienceFilter);
+    return rows
+      .filter(cityFilter)
+      .filter(technologyFilter)
+      .filter(experienceFilter);
   }
 }

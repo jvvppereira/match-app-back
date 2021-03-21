@@ -71,10 +71,38 @@ describe("Load candidates", () => {
     });
   });
 
+  describe("Get available filters from API", () => {
+    const routeName = "/availableFilter"
+
+    it("should return the available options to filter API data", async () => {
+      const response = await doRequest({}, {}, routeName);
+
+      expect(Object.keys(response.body.filters).length).toBe(3);
+    });
+
+    it("should return the available cities to filters the API", async () => {
+      const response = await doRequest({}, {}, routeName);
+
+      expect(response.body.filters.cities.length).toBe(56);
+    });
+
+    it("should return the available experiences to filters the API", async () => {
+      const response = await doRequest({}, {}, routeName);
+
+      expect(response.body.filters.experiences.length).toBe(13);
+    });
+
+    it("should return the available technologies to filter the API", async () => {
+      const response = await doRequest({}, {}, routeName);
+
+      expect(response.body.filters.technologies.length).toBe(151);
+    });
+  });
+
   describe("Get candidates filtered from API", () => {
-    it("should return candidates filtered by locale", async () => {
+    it("should return candidates filtered by cities", async () => {
       const filters = {
-        locales: ["Florianópolis - SC"],
+        cities: ["Florianópolis - SC"],
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -82,9 +110,9 @@ describe("Load candidates", () => {
       expect(response.body.total).toBe(4);
     });
 
-    it("should return candidates filtered by 2 locales", async () => {
+    it("should return candidates filtered by 2 cities", async () => {
       const filters = {
-        locales: ["Florianópolis - SC", "Indaial - SC"],
+        cities: ["Florianópolis - SC", "Indaial - SC"],
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -132,9 +160,9 @@ describe("Load candidates", () => {
       expect(response.body.total).toBe(28);
     });
 
-    it("should return candidates filtered by locale, technology and experience", async () => {
+    it("should return candidates filtered by city, technology and experience", async () => {
       const filters = {
-        locales: ["Florianópolis - SC"],
+        cities: ["Florianópolis - SC"],
         technologies: ["Ruby", "Ruby on Rails"],
         experiences: [
           "1-2 years",
