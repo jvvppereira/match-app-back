@@ -13,11 +13,13 @@ const doRequest = async (
     usePagination = 1,
     rowsPerPage = 10,
   } = queryParams;
-  return await request(app)
-    .get(
-      `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`
-    )
-    .send(body);
+  const queryParameters = `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`;
+
+  if (endpoint == "/candidate") {
+    return await request(app).patch(queryParameters).send(body);
+  } 
+    
+  return await request(app).get(queryParameters);
 };
 
 describe("Load candidates", () => {
@@ -72,7 +74,7 @@ describe("Load candidates", () => {
   });
 
   describe("Get available filters from API", () => {
-    const routeName = "/availableFilter"
+    const routeName = "/availableFilter";
 
     it("should return the available options to filter API data", async () => {
       const response = await doRequest({}, {}, routeName);

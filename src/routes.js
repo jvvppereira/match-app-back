@@ -5,7 +5,7 @@ const routes = Router();
 
 const candidateController = new CandidateController();
 
-routes.get("/candidate", candidateController.getAll.bind(candidateController));
+routes.patch("/candidate", candidateController.getAll.bind(candidateController));
 routes.get("/availableFilter", candidateController.getAvailableFilters.bind(candidateController));
 
 export default routes;
