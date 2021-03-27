@@ -17,8 +17,8 @@ const doRequest = async (
 
   if (endpoint == "/candidate") {
     return await request(app).patch(queryParameters).send(body);
-  } 
-    
+  }
+
   return await request(app).get(queryParameters);
 };
 
@@ -124,7 +124,7 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by technology", async () => {
       const filters = {
-        technologies: ["Ruby"],
+        technologies: { wayToFilter: "or", list: ["Ruby"] },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -134,12 +134,22 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 technologies", async () => {
       const filters = {
-        technologies: ["Ruby", "Ruby on Rails"],
+        technologies: { wayToFilter: "or", list: ["Ruby", "Ruby on Rails"] },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
 
       expect(response.body.total).toBe(4);
+    });
+
+    it("should return candidates filtered by 2 technologies that need to have the both knowleadges", async () => {
+      const filters = {
+        technologies: { wayToFilter: "and", list: ["Ruby", "Ruby on Rails"] },
+      };
+
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(1);
     });
 
     it("should return candidates filtered by experience", async () => {
@@ -165,7 +175,7 @@ describe("Load candidates", () => {
     it("should return candidates filtered by city, technology and experience", async () => {
       const filters = {
         cities: ["Florianópolis - SC"],
-        technologies: ["Ruby", "Ruby on Rails"],
+        technologies: { wayToFilter: "or", list: ["Ruby", "Ruby on Rails"] },
         experiences: [
           "1-2 years",
           "3-4 years",
@@ -180,6 +190,22 @@ describe("Load candidates", () => {
       const response = await doRequest({ usePagination: 0 }, filters);
 
       expect(response.body.total).toBe(1);
+    });
+
+    it("should return candidates filtered by technology and experience matching the skills", async () => {
+      const filters = {
+        technologies: { wayToFilter: "and", list: ["React", "Node.js"] },
+        experiences: [
+          "5-6 years",
+          "7-8 years",
+          "8-9 years",
+          "10-11 years",
+          "12+ years",
+        ],
+      };
+      const response = await doRequest({ usePagination: 0 }, filters);
+
+      expect(response.body.total).toBe(6);
     });
   });
 });
