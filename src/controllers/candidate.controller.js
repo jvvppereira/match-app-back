@@ -1,11 +1,64 @@
 import "regenerator-runtime";
 import axios from "axios";
 import fallbackData from "../../assets/fallback-data.json";
+import Sequelize from "sequelize";
+const Op = Sequelize.Op;
+import db from "../models";
+import DefaultController from "./default-controller";
+export default class CandidateController extends DefaultController {
+  constructor(config) {
+    super(config);
+  }
 
-export default class CandidateController {
+  async populateCandidateTable(request, response) {
+    const {
+      data: { candidates },
+    } = await this.getDataFromAPI(false);
+
+    const dbExperiences = await db.experience.findAll();
+    const dbTechnology = await db.technology.findAll();
+
+    candidates.map(async (candidate) => {
+      const experienceId = dbExperiences.find(
+        (experience) =>
+          candidate.experience.replace("years", "anos") == experience.name
+      ).id;
+
+      const dbCandidate = {
+        visualId: candidate.id,
+        cityName: candidate.city,
+        experienceId,
+      };
+
+      const candidateSaved = await db.candidate.create(dbCandidate);
+
+      candidate.technologies.map((technology) => {
+        const technologyId = dbTechnology.find(
+          (tech) => technology.name == tech.name
+        ).id;
+
+        const dbCandidateTechnology = {
+          candidateId: candidateSaved.id,
+          mainTechnology: technology.is_main_tech,
+          technologyId,
+        };
+
+        db.candidate_technology.create(dbCandidateTechnology);
+      });
+    });
+
+    const dbCandidateTechnology = await db.candidate_technology.findAndCountAll();
+    const dbCandidate = await db.candidate.findAndCountAll();
+
+    return response.json({
+      candidateCount: dbCandidate.count,
+      candidateTechnologyCount: dbCandidateTechnology.count,
+    });
+  }
+
   async getDataFromAPI(useFallback) {
     const getDataFromFallback = () => fallbackData;
-    const s3repo = "https://geekhunter-recruiting.s3.amazonaws.com/";
+    const s3repo = process.env.S3_REPO;
     const connectionDefaultAPI = axios.create({ baseURL: s3repo });
     let data;
 
@@ -21,68 +74,6 @@ export default class CandidateController {
     }
 
     return data;
-  }
-
-  loadArrays(data, fieldName) {
-    return data.reduce((acumulator, currentCandidate) => {
-      const currentObject = currentCandidate[fieldName];
-      if (!acumulator.includes(currentObject)) {
-        acumulator.push(currentObject);
-      }
-      return acumulator;
-    }, []);
-  }
-
-  loadCities(data) {
-    return this.loadArrays(data, "city").sort();
-  }
-
-  loadExperiences(data) {
-    return this.loadArrays(data, "experience").sort(
-      (experienceLeft, experienceRight) => {
-        const getExperienceNumber = (expString) => {
-          let extractedNumber = Number(expString.slice(0, 2));
-          if (Number.isNaN(extractedNumber)) {
-            extractedNumber = Number(expString.slice(0, 1));
-          }
-          return extractedNumber;
-        };
-
-        const numberExpLeft = getExperienceNumber(experienceLeft);
-        const numberExpRight = getExperienceNumber(experienceRight);
-
-        return numberExpLeft - numberExpRight;
-      }
-    );
-  }
-
-  loadTechnologies(data) {
-    return data
-      .reduce((acumulator, currentCandidate) => {
-        currentCandidate.technologies.forEach((currentTechnology) => {
-          if (!acumulator.includes(currentTechnology.name)) {
-            acumulator.push(currentTechnology.name);
-          }
-        });
-        return acumulator;
-      }, [])
-      .sort();
-  }
-
-  async getAvailableFilters(request, response) {
-    const { useFallback = 0 } = request.query;
-
-    const {
-      data: { candidates: apiData },
-    } = await this.getDataFromAPI(useFallback);
-
-    return response.json({
-      filters: {
-        cities: this.loadCities(apiData),
-        experiences: this.loadExperiences(apiData),
-        technologies: this.loadTechnologies(apiData),
-      },
-    });
   }
 
   formatJsonResponse(response, apiData, total, offset, limit, page, pages) {
@@ -108,7 +99,12 @@ export default class CandidateController {
   }
 
   async getAll(request, response) {
-    const { page = 1, useFallback = 0, usePagination = 1,  rowsPerPage = 10 } = request.query;
+    const {
+      page = 1,
+      useFallback = 0,
+      usePagination = 1,
+      rowsPerPage = 10,
+    } = request.query;
     const {
       cities = [],
       technologies = { wayToFilter: "or", list: [] },
@@ -123,11 +119,24 @@ export default class CandidateController {
 
     apiData = this.applyFilters(apiData, filters);
 
-    const { total, limit, offset, pages } = this.loadAdditionalInformation(apiData, usePagination, rowsPerPage, page);
+    const { total, limit, offset, pages } = this.loadAdditionalInformation(
+      apiData,
+      usePagination,
+      rowsPerPage,
+      page
+    );
 
     apiData = [...apiData].splice(offset, limit);
 
-    return this.formatJsonResponse(response, apiData, total, offset, limit, page, pages);
+    return this.formatJsonResponse(
+      response,
+      apiData,
+      total,
+      offset,
+      limit,
+      page,
+      pages
+    );
   }
 
   applyFilters(candidates, filters) {
