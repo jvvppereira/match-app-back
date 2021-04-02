@@ -1,4 +1,4 @@
-import candidate from "../models/candidate";
+import db from "../models";
 
 export default class FilterController {
   constructor(config) {
@@ -53,23 +53,53 @@ export default class FilterController {
       .sort();
   }
 
-  async getAvailableFilters(request, response) {
-    const { useFallback = 0, useDataBase = 1 } = request.query;
+  formatJsonResponse(response, cities, experiences, technologies) {
+    return response.json({
+      filters: {
+        cities,
+        experiences,
+        technologies,
+      },
+    });
+  }
 
-    if (useDataBase) {
-      return {};
-    } else {
+  async getAvailableFilters(request, response) {
+    const { useFallback = 0, useApi = 0 } = request.query;
+
+    if (useApi) {
       const {
         data: { candidates: apiData },
       } = await this.candidateController.getDataFromAPI(useFallback);
 
-      return response.json({
-        filters: {
-          cities: this.loadCities(apiData),
-          experiences: this.loadExperiences(apiData),
-          technologies: this.loadTechnologies(apiData),
-        },
-      });
+      return this.formatJsonResponse(
+        response,
+        this.loadCities(apiData),
+        this.loadExperiences(apiData),
+        this.loadTechnologies(apiData)
+      );
+    } else {
+      const dbCandidates = await db.candidate.findAll();
+      const dbExperiences = await db.experience.findAll();
+      const dbTechnology = await db.technology.findAll();
+
+      const removeDuplicated = (list) => {
+        let set = new Set(list);
+        let values = set.values();
+        return Array.from(values);
+      };
+
+      const cities = removeDuplicated(
+        dbCandidates.map((candidate) => candidate.cityName)
+      ).sort();
+
+      console.log(cities);
+
+      return this.formatJsonResponse(
+        response,
+        cities,
+        dbExperiences.map((experience) => experience.name),
+        dbTechnology.map((technology) => technology.name)
+      );
     }
   }
 }
