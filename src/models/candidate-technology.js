@@ -2,7 +2,7 @@ import Candidate from "./candidate";
 import Technology from "./technology";
 
 export default (sequelize, DataTypes) => {
-  return sequelize.define(
+  const candidate_technology = sequelize.define(
     "candidate_technology",
     {
       id: { primaryKey: true, type: DataTypes.INTEGER, autoIncrement: true },
@@ -21,10 +21,23 @@ export default (sequelize, DataTypes) => {
         },
         type: DataTypes.INTEGER,
       },
+      active: DataTypes.TINYINT,
     },
     {
       freezeTableName: true,
       timestamps: false,
     }
   );
+
+  candidate_technology.belongsTo(sequelize.import("./candidate"), {
+    foreignKey: "candidateId",
+    targetKey: "id",
+  });
+
+  candidate_technology.belongsTo(sequelize.import("./technology"), {
+    foreignKey: "technologyId",
+    targetKey: "id",
+  });
+
+  return candidate_technology;
 };

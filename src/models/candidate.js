@@ -1,7 +1,7 @@
 import Experience from "./experience";
 
 export default (sequelize, DataTypes) => {
-  return sequelize.define(
+  const candidate = sequelize.define(
     "candidate",
     {
       id: { primaryKey: true, type: DataTypes.INTEGER, autoIncrement: true },
@@ -14,10 +14,18 @@ export default (sequelize, DataTypes) => {
         },
         type: DataTypes.INTEGER,
       },
+      active: DataTypes.TINYINT,
     },
     {
       freezeTableName: true,
       timestamps: false,
     }
   );
+
+  candidate.belongsTo(sequelize.import("./experience"), {
+    foreignKey: "experienceId",
+    targetKey: "id",
+  });
+
+  return candidate;
 };

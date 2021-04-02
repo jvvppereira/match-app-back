@@ -4,6 +4,7 @@ export default (sequelize, DataTypes) => {
     {
       id: { primaryKey: true, type: DataTypes.INTEGER, autoIncrement: true },
       name: DataTypes.STRING,
+      active: DataTypes.TINYINT,
     },
     {
       freezeTableName: true,

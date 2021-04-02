@@ -6,6 +6,7 @@ export default (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       startsAt: DataTypes.INTEGER,
       endsAt: DataTypes.INTEGER,
+      active: DataTypes.TINYINT,
     },
     {
       freezeTableName: true,

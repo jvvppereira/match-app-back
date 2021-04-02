@@ -7,13 +7,8 @@ const doRequest = async (
   body = {},
   endpoint = "/candidate"
 ) => {
-  const {
-    page = 1,
-    useFallback = 0,
-    usePagination = 1,
-    rowsPerPage = 10,
-  } = queryParams;
-  const queryParameters = `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`;
+  const { page = 1, usePagination = 1, rowsPerPage = 10 } = queryParams;
+  const queryParameters = `${endpoint}?&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`;
 
   if (endpoint == "/candidate") {
     return await request(app).patch(queryParameters).send(body);
@@ -30,11 +25,11 @@ describe("Load candidates", () => {
       expect(response.statusCode).toBe(200);
     });
 
-    it("should use API fallback", async () => {
-      const response = await doRequest({ useFallback: 1 });
+    // it("should use API fallback", async () => {
+    //   const response = await doRequest({ useFallback: 1 });
 
-      expect(response.statusCode).toBe(200);
-    });
+    //   expect(response.statusCode).toBe(200);
+    // });
   });
 
   describe("Get candidates from API", () => {
@@ -104,7 +99,12 @@ describe("Load candidates", () => {
   describe("Get candidates filtered from API", () => {
     it("should return candidates filtered by cities", async () => {
       const filters = {
-        cities: ["Florianópolis - SC"],
+        filters: {
+          cityName: {
+            type: "LIKE",
+            value: "Florianópolis - SC",
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -114,7 +114,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 cities", async () => {
       const filters = {
-        cities: ["Florianópolis - SC", "Indaial - SC"],
+        filters: {
+          cityName: {
+            type: "IN",
+            values: ["Florianópolis - SC", "Indaial - SC"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -154,7 +159,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by experience", async () => {
       const filters = {
-        experiences: ["1-2 years"],
+        filters: {
+          "experience.name": {
+            type: "LIKE",
+            value: "1-2 anos",
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -164,9 +174,13 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 experiences", async () => {
       const filters = {
-        experiences: ["1-2 years", "3-4 years"],
+        filters: {
+          "experience.name": {
+            type: "IN",
+            values: ["1-2 anos", "3-4 anos"],
+          },
+        },
       };
-
       const response = await doRequest({ usePagination: 0 }, filters);
 
       expect(response.body.total).toBe(28);

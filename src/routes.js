@@ -30,9 +30,10 @@ routes.get(
   filterController.getAvailableFilters.bind(filterController)
 );
 
-routes.get(
-  "/populateCandidateTable",
-  candidateController.populateCandidateTable.bind(candidateController)
-);
+// Only for tests
+// routes.get(
+//   "/populateCandidateTable",
+//   candidateController.populateCandidateTable.bind(candidateController)
+// );
 
 export default routes;
