@@ -106,7 +106,7 @@ export default class DefaultController {
       include,
     });
     const total = list.rows.length;
-    const pages = usePaginationFn() ? Math.ceil(total / limit) : 1;
+    const pages = usePaginationFn() ? Math.ceil(list.count / limit) : 1;
 
     return {
       data: list.rows,
