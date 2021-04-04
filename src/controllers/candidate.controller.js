@@ -99,6 +99,9 @@ export default class CandidateController extends DefaultController {
         ),
       };
     }
+    if (technologyName?.type == "IN") {
+      request.query.usePagination = 0; //TODO verify a better way to avoid sequelize error
+    }
 
     const rawData = await super.indexData(request, where);
 
@@ -113,17 +116,16 @@ export default class CandidateController extends DefaultController {
             }
           );
         }
-        if (!candidate.dataValues.candidate_technology) {
-          candidate.dataValues.candidate_technology = await this.candidateTechnologyController
-            .getModel()
-            .findAll({
-              where: { candidateId: candidate.id },
-              include: {
-                model: this.technologyController.getModel(),
-                as: "technology",
-              },
-            });
-        }
+
+        candidate.dataValues.candidate_technology = await this.candidateTechnologyController
+          .getModel()
+          .findAll({
+            where: { candidateId: candidate.id },
+            include: {
+              model: this.technologyController.getModel(),
+              as: "technology",
+            },
+          });
       }
     }
 
