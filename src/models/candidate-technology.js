@@ -29,14 +29,10 @@ export default (sequelize, DataTypes) => {
     }
   );
 
-  candidate_technology.belongsTo(sequelize.import("./candidate"), {
-    foreignKey: "candidateId",
-    targetKey: "id",
-  });
-
   candidate_technology.belongsTo(sequelize.import("./technology"), {
     foreignKey: "technologyId",
     targetKey: "id",
+    as: "technology",
   });
 
   return candidate_technology;

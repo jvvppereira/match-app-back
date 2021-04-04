@@ -129,7 +129,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by technology", async () => {
       const filters = {
-        technologies: { wayToFilter: "or", list: ["Ruby"] },
+        filters: {
+          "candidate_technology.technology.name": {
+            type: "EQUALS",
+            value: "Ruby",
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -139,7 +144,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 technologies", async () => {
       const filters = {
-        technologies: { wayToFilter: "or", list: ["Ruby", "Ruby on Rails"] },
+        filters: {
+          "candidate_technology.technology.name": {
+            type: "IN",
+            values: ["Ruby", "Ruby on Rails"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -149,7 +159,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 technologies that need to have the both knowleadges", async () => {
       const filters = {
-        technologies: { wayToFilter: "and", list: ["Ruby", "Ruby on Rails"] },
+        filters: {
+          "candidate_technology.technology.name": {
+            type: "AND",
+            values: ["Ruby", "Ruby on Rails"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -188,17 +203,28 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by city, technology and experience", async () => {
       const filters = {
-        cities: ["Florianópolis - SC"],
-        technologies: { wayToFilter: "or", list: ["Ruby", "Ruby on Rails"] },
-        experiences: [
-          "1-2 years",
-          "3-4 years",
-          "5-6 years",
-          "7-8 years",
-          "8-9 years",
-          "10-11 years",
-          "12+ years",
-        ],
+        filters: {
+          cityName: {
+            type: "LIKE",
+            value: "Florianópolis - SC",
+          },
+          "experience.name": {
+            type: "IN",
+            values: [
+              "1-2 anos",
+              "3-4 anos",
+              "5-6 anos",
+              "7-8 anos",
+              "8-9 anos",
+              "10-11 anos",
+              "12+ anos",
+            ],
+          },
+          "candidate_technology.technology.name": {
+            type: "IN",
+            values: ["Ruby", "Ruby on Rails"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -208,15 +234,24 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by technology and experience matching the skills", async () => {
       const filters = {
-        technologies: { wayToFilter: "and", list: ["React", "Node.js"] },
-        experiences: [
-          "5-6 years",
-          "7-8 years",
-          "8-9 years",
-          "10-11 years",
-          "12+ years",
-        ],
+        filters: {
+          "experience.name": {
+            type: "IN",
+            values: [
+              "5-6 anos",
+              "7-8 anos",
+              "8-9 anos",
+              "10-11 anos",
+              "12+ anos",
+            ],
+          },
+          "candidate_technology.technology.name": {
+            type: "AND",
+            values: ["React", "Node.js"],
+          },
+        },
       };
+
       const response = await doRequest({ usePagination: 0 }, filters);
 
       expect(response.body.total).toBe(6);

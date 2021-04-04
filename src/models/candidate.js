@@ -27,5 +27,11 @@ export default (sequelize, DataTypes) => {
     targetKey: "id",
   });
 
+  candidate.hasMany(sequelize.import("./candidate-technology"), {
+    foreignKey: "candidateId",
+    targetKey: "id",
+    as: "candidate_technology"
+  });
+
   return candidate;
 };

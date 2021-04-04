@@ -77,8 +77,24 @@ export default class CandidateController extends DefaultController {
   }
 
   async indexData(request) {
-    const include = [];
+    const { filters } = request.body;
+    let where = {};
 
-    return super.indexData(request, include);
+    const technologyName =
+      filters && filters["candidate_technology.technology.name"];
+
+    if (technologyName?.type == "AND") {
+      const technologiesList = JSON.stringify(technologyName.values);
+
+      delete filters["candidate_technology.technology.name"];
+
+      where = {
+        [Op.and]: Sequelize.literal(
+          `haveAllTechonologies(candidate.id, '${technologiesList}') COLLATE utf8mb4_0900_ai_ci = 'Y'`
+        ),
+      };
+    }
+
+    return super.indexData(request, where);
   }
 }

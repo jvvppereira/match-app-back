@@ -20,7 +20,7 @@ export default class DefaultController {
     return this.model;
   }
 
-  async indexData(request, customInclude = {}) {
+  async indexData(request, customWhere = {}) {
     const {
       page = 1,
       showActives = 1,
@@ -37,9 +37,10 @@ export default class DefaultController {
       active: {
         [Op.gte]: showActives,
       },
+      ...customWhere
     };
 
-    const include = [...customInclude];
+    const include = [];
 
     for (const field in filters) {
       const filter = filters[field];
@@ -47,6 +48,12 @@ export default class DefaultController {
       let value = filter.value;
 
       switch (filter.type) {
+        case "EQUALS":
+          operation = Op.eq;
+          break;
+        case "AND":
+          operation = Op.and;
+          break;
         case "BETWEEN":
           operation = Op.between;
           value = [filter.values.start, filter.values.end];
@@ -54,24 +61,37 @@ export default class DefaultController {
         case "IN": {
           operation = Op.in;
           value = filter.values;
+          break;
         }
       }
 
       if (field.includes(".")) {
-        const [tableName, fieldName] = field.split(".");
-        const whereToFilter = {};
-        whereToFilter[fieldName] = {
-          [operation]: value,
-        };
+        const applyFilterOnChildrenTable = (field) => {
+          const [tableName, fieldName, ...child] = field.split(".");
+          const innerInclude = [];
 
-        const tableToFilter = {
-          model: db.experience,
-          as: tableName,
-          attributes: ["id", fieldName],
-          where: whereToFilter,
-        };
+          const tableToFilter = {
+            model: db[tableName],
+            as: tableName,
+            required: true,
+          };
 
-        include.push(tableToFilter);
+          if (child.length > 0) {
+            innerInclude.push(
+              applyFilterOnChildrenTable(`${fieldName}.${child[0]}`)
+            );
+          } else {
+            tableToFilter.where = {};
+            tableToFilter.where[fieldName] = {
+              [operation]: value,
+            };
+          }
+          if (innerInclude.length > 0) {
+            tableToFilter.include = innerInclude;
+          }
+          return tableToFilter;
+        };
+        include.push(applyFilterOnChildrenTable(field));
       } else {
         where[field] = {
           [operation]: value,
@@ -85,7 +105,7 @@ export default class DefaultController {
       where,
       include,
     });
-    const total = list.count;
+    const total = list.rows.length;
     const pages = usePaginationFn() ? Math.ceil(total / limit) : 1;
 
     return {
