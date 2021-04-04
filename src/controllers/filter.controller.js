@@ -18,7 +18,7 @@ export default class FilterController {
   async getAvailableFilters(request, response) {
     request.query = { ...request.query, usePagination: 0 };
 
-    const candidates = await this.candidateController.indexData(request);
+    const candidates = await this.candidateController.indexData(request, false);
     const experiences = await this.experienceController.indexData(request);
     const technologies = await this.technologyController.indexData(request);
 

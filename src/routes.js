@@ -14,8 +14,17 @@ const candidateURL = "candidate";
 
 const experienceController = new DefaultController({ model: db.experience });
 const technologyController = new DefaultController({ model: db.technology });
-const candidateTechnologyController = new DefaultController({ model: db.candidate_technology });
-const candidateController = new CandidateController({ model: db.candidate });
+const candidateTechnologyController = new DefaultController({
+  model: db.candidate_technology,
+});
+const candidateController = new CandidateController({
+  model: db.candidate,
+  controllers: {
+    experienceController,
+    candidateTechnologyController,
+    technologyController,
+  },
+});
 const filterController = new FilterController({
   candidateController,
   experienceController,

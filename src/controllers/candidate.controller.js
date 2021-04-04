@@ -8,6 +8,11 @@ import DefaultController from "./default-controller";
 export default class CandidateController extends DefaultController {
   constructor(config) {
     super(config);
+
+    this.experienceController = config.controllers.experienceController;
+    this.candidateTechnologyController =
+      config.controllers.candidateTechnologyController;
+    this.technologyController = config.controllers.technologyController;
   }
 
   async getDataFromAPI(useFallback) {
@@ -76,7 +81,7 @@ export default class CandidateController extends DefaultController {
     });
   }
 
-  async indexData(request) {
+  async indexData(request, lazyLoad = true) {
     const { filters } = request.body;
     let where = {};
 
@@ -95,6 +100,33 @@ export default class CandidateController extends DefaultController {
       };
     }
 
-    return super.indexData(request, where);
+    const rawData = await super.indexData(request, where);
+
+    if (lazyLoad) {
+      for (let index = 0; index < rawData.data.length; index++) {
+        const candidate = rawData.data[index];
+
+        if (!candidate.dataValues.experience) {
+          candidate.dataValues.experience = await this.experienceController.showPureRecord(
+            {
+              params: { id: candidate.experienceId },
+            }
+          );
+        }
+        if (!candidate.dataValues.candidate_technology) {
+          candidate.dataValues.candidate_technology = await this.candidateTechnologyController
+            .getModel()
+            .findAll({
+              where: { candidateId: candidate.id },
+              include: {
+                model: this.technologyController.getModel(),
+                as: "technology",
+              },
+            });
+        }
+      }
+    }
+
+    return rawData;
   }
 }
