@@ -7,8 +7,8 @@ const doRequest = async (
   body = {},
   endpoint = "/candidate"
 ) => {
-  const { page = 1, usePagination = 1, rowsPerPage = 10 } = queryParams;
-  const queryParameters = `${endpoint}?&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`;
+  const { page = 1, usePagination = 1, rowsPerPage = 10, useLazyLoad = 1 } = queryParams;
+  const queryParameters = `${endpoint}?&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}&useLazyLoad=${useLazyLoad}`;
 
   if (endpoint == "/candidate") {
     return await request(app).patch(queryParameters).send(body);
@@ -20,7 +20,7 @@ const doRequest = async (
 describe("Load candidates", () => {
   describe("Access to API", () => {
     it("should connect to API", async () => {
-      const response = await doRequest();
+      const response = await doRequest({ useLazyLoad: 0 });
 
       expect(response.statusCode).toBe(200);
     });
@@ -34,7 +34,7 @@ describe("Load candidates", () => {
 
   describe("Get candidates from API", () => {
     it("should return all candidates", async () => {
-      const response = await doRequest({ usePagination: 0 });
+      const response = await doRequest({ usePagination: 0, useLazyLoad: 0 });
 
       expect(response.body.total).toBe(100);
     });
@@ -54,14 +54,14 @@ describe("Load candidates", () => {
     });
 
     it("should return all candidates paged at page 1 with 12 rows", async () => {
-      const response = await doRequest({ page: 1, rowsPerPage: 12 });
+      const response = await doRequest({ page: 1, rowsPerPage: 12, useLazyLoad: 0 });
 
       expect(response.body.offset).toBe(0);
       expect(response.body.limit).toBe(12);
     });
 
     it("should return all candidates paged at page 3 with 20 rows", async () => {
-      const response = await doRequest({ page: 3, rowsPerPage: 20 });
+      const response = await doRequest({ page: 3, rowsPerPage: 20, useLazyLoad: 0 });
 
       expect(response.body.offset).toBe(40);
       expect(response.body.limit).toBe(20);
@@ -196,7 +196,7 @@ describe("Load candidates", () => {
           },
         },
       };
-      const response = await doRequest({ usePagination: 0 }, filters);
+      const response = await doRequest({ usePagination: 0, useLazyLoad: 0 }, filters);
 
       expect(response.body.total).toBe(28);
     });

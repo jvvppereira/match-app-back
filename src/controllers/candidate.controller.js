@@ -105,7 +105,7 @@ export default class CandidateController extends DefaultController {
 
     const rawData = await super.indexData(request, where);
 
-    if (lazyLoad) {
+    if (lazyLoad && (request.query.useLazyLoad || 1) == 1) {
       for (let index = 0; index < rawData.data.length; index++) {
         const candidate = rawData.data[index];
 
