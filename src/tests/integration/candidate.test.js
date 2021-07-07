@@ -7,13 +7,8 @@ const doRequest = async (
   body = {},
   endpoint = "/candidate"
 ) => {
-  const {
-    page = 1,
-    useFallback = 0,
-    usePagination = 1,
-    rowsPerPage = 10,
-  } = queryParams;
-  const queryParameters = `${endpoint}?useFallback=${useFallback}&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}`;
+  const { page = 1, usePagination = 1, rowsPerPage = 10, useLazyLoad = 1 } = queryParams;
+  const queryParameters = `${endpoint}?&usePagination=${usePagination}&page=${page}&rowsPerPage=${rowsPerPage}&useLazyLoad=${useLazyLoad}`;
 
   if (endpoint == "/candidate") {
     return await request(app).patch(queryParameters).send(body);
@@ -25,21 +20,21 @@ const doRequest = async (
 describe("Load candidates", () => {
   describe("Access to API", () => {
     it("should connect to API", async () => {
-      const response = await doRequest();
+      const response = await doRequest({ useLazyLoad: 0 });
 
       expect(response.statusCode).toBe(200);
     });
 
-    it("should use API fallback", async () => {
-      const response = await doRequest({ useFallback: 1 });
+    // it("should use API fallback", async () => {
+    //   const response = await doRequest({ useFallback: 1 });
 
-      expect(response.statusCode).toBe(200);
-    });
+    //   expect(response.statusCode).toBe(200);
+    // });
   });
 
   describe("Get candidates from API", () => {
     it("should return all candidates", async () => {
-      const response = await doRequest({ usePagination: 0 });
+      const response = await doRequest({ usePagination: 0, useLazyLoad: 0 });
 
       expect(response.body.total).toBe(100);
     });
@@ -59,14 +54,14 @@ describe("Load candidates", () => {
     });
 
     it("should return all candidates paged at page 1 with 12 rows", async () => {
-      const response = await doRequest({ page: 1, rowsPerPage: 12 });
+      const response = await doRequest({ page: 1, rowsPerPage: 12, useLazyLoad: 0 });
 
       expect(response.body.offset).toBe(0);
       expect(response.body.limit).toBe(12);
     });
 
     it("should return all candidates paged at page 3 with 20 rows", async () => {
-      const response = await doRequest({ page: 3, rowsPerPage: 20 });
+      const response = await doRequest({ page: 3, rowsPerPage: 20, useLazyLoad: 0 });
 
       expect(response.body.offset).toBe(40);
       expect(response.body.limit).toBe(20);
@@ -104,7 +99,12 @@ describe("Load candidates", () => {
   describe("Get candidates filtered from API", () => {
     it("should return candidates filtered by cities", async () => {
       const filters = {
-        cities: ["Florianópolis - SC"],
+        filters: {
+          cityName: {
+            type: "LIKE",
+            value: "Florianópolis - SC",
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -114,7 +114,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 cities", async () => {
       const filters = {
-        cities: ["Florianópolis - SC", "Indaial - SC"],
+        filters: {
+          cityName: {
+            type: "IN",
+            values: ["Florianópolis - SC", "Indaial - SC"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -124,7 +129,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by technology", async () => {
       const filters = {
-        technologies: { wayToFilter: "or", list: ["Ruby"] },
+        filters: {
+          "candidate_technology.technology.name": {
+            type: "EQUALS",
+            value: "Ruby",
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -134,7 +144,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 technologies", async () => {
       const filters = {
-        technologies: { wayToFilter: "or", list: ["Ruby", "Ruby on Rails"] },
+        filters: {
+          "candidate_technology.technology.name": {
+            type: "IN",
+            values: ["Ruby", "Ruby on Rails"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -144,7 +159,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 technologies that need to have the both knowleadges", async () => {
       const filters = {
-        technologies: { wayToFilter: "and", list: ["Ruby", "Ruby on Rails"] },
+        filters: {
+          "candidate_technology.technology.name": {
+            type: "AND",
+            values: ["Ruby", "Ruby on Rails"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -154,7 +174,12 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by experience", async () => {
       const filters = {
-        experiences: ["1-2 years"],
+        filters: {
+          "experience.name": {
+            type: "LIKE",
+            value: "1-2 anos",
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -164,27 +189,42 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by 2 experiences", async () => {
       const filters = {
-        experiences: ["1-2 years", "3-4 years"],
+        filters: {
+          "experience.name": {
+            type: "IN",
+            values: ["1-2 anos", "3-4 anos"],
+          },
+        },
       };
-
-      const response = await doRequest({ usePagination: 0 }, filters);
+      const response = await doRequest({ usePagination: 0, useLazyLoad: 0 }, filters);
 
       expect(response.body.total).toBe(28);
     });
 
     it("should return candidates filtered by city, technology and experience", async () => {
       const filters = {
-        cities: ["Florianópolis - SC"],
-        technologies: { wayToFilter: "or", list: ["Ruby", "Ruby on Rails"] },
-        experiences: [
-          "1-2 years",
-          "3-4 years",
-          "5-6 years",
-          "7-8 years",
-          "8-9 years",
-          "10-11 years",
-          "12+ years",
-        ],
+        filters: {
+          cityName: {
+            type: "LIKE",
+            value: "Florianópolis - SC",
+          },
+          "experience.name": {
+            type: "IN",
+            values: [
+              "1-2 anos",
+              "3-4 anos",
+              "5-6 anos",
+              "7-8 anos",
+              "8-9 anos",
+              "10-11 anos",
+              "12+ anos",
+            ],
+          },
+          "candidate_technology.technology.name": {
+            type: "IN",
+            values: ["Ruby", "Ruby on Rails"],
+          },
+        },
       };
 
       const response = await doRequest({ usePagination: 0 }, filters);
@@ -194,15 +234,24 @@ describe("Load candidates", () => {
 
     it("should return candidates filtered by technology and experience matching the skills", async () => {
       const filters = {
-        technologies: { wayToFilter: "and", list: ["React", "Node.js"] },
-        experiences: [
-          "5-6 years",
-          "7-8 years",
-          "8-9 years",
-          "10-11 years",
-          "12+ years",
-        ],
+        filters: {
+          "experience.name": {
+            type: "IN",
+            values: [
+              "5-6 anos",
+              "7-8 anos",
+              "8-9 anos",
+              "10-11 anos",
+              "12+ anos",
+            ],
+          },
+          "candidate_technology.technology.name": {
+            type: "AND",
+            values: ["React", "Node.js"],
+          },
+        },
       };
+
       const response = await doRequest({ usePagination: 0 }, filters);
 
       expect(response.body.total).toBe(6);

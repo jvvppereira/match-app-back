@@ -3,3 +3,5 @@
 /src/tests/coverage
 
 package-lock.json
+
+.env
